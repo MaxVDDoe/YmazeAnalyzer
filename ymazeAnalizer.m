@@ -1,4 +1,4 @@
-function [Summary, Stats2] = ymazeAnalizer(varargin)
+function [Summary,Stats,Stats2] = ymazeAnalizer(varargin)
 % Y-Maze data analyzer: Analizes data from the Y-watermaze for reversal
 % learning in mice
 %
@@ -76,7 +76,7 @@ if isempty(find(strcmpi(varargin,'File'),1))==0                             % If
     File = [Path '\' File];                                                 % Combine path and file, this is used to save the data
 
 else
-    [File,Path] = uigetfile;                                                % Get file from user
+    [File,Path] = uigetfile('*');                                                % Get file from user
     File = [Path File];                                                     % Combine path and file, this is used to save the data
 end
 
@@ -146,14 +146,16 @@ end
 Stats = array2table(zeros(height(data.MouseNumber),length(Condition)+25));  % Predefine Stats to be a table, width is determint by the number of conditions given
 switch length(Condition)                                                    % Swich based on the amount of conditions
     case 1                                                                  % Variable names are the same as trings in the Condition variable
-        Stats.Properties.VariableNames = {'Gene','Gender',Condition{1},'Acq1.1','Acq1.2','Acq1.3','Acq1.4','Acq2.1','Acq2.2','Acq2.3','Acq2.4','Test','Rev1.1','Rev1.2','Rev1.3','Rev1.4','Rev1.5','Rev2.1','Rev2.2','Rev2.3','Rev2.4','Rev2.5','Acq80','Rev80','AUCAcq','AUCRev'};
+        Stats.Properties.VariableNames = {'MouseNumber','Gene',Condition{1},'Acq1.1','Acq1.2','Acq1.3','Acq1.4','Acq2.1','Acq2.2','Acq2.3','Acq2.4','Test','Rev1.1','Rev1.2','Rev1.3','Rev1.4','Rev1.5','Rev2.1','Rev2.2','Rev2.3','Rev2.4','Rev2.5','Acq80','Rev80','AUCAcq','AUCRev'};
     case 2
-        Stats.Properties.VariableNames = {'Gene','Gender',Condition{1},Condition{2},'Acq1.1','Acq1.2','Acq1.3','Acq1.4','Acq2.1','Acq2.2','Acq2.3','Acq2.4','Test','Rev1.1','Rev1.2','Rev1.3','Rev1.4','Rev1.5','Rev2.1','Rev2.2','Rev2.3','Rev2.4','Rev2.5','Acq80','Rev80','AUCAcq','AUCRev'};
+        Stats.Properties.VariableNames = {'MouseNumber','Gene',Condition{1},Condition{2},'Acq1.1','Acq1.2','Acq1.3','Acq1.4','Acq2.1','Acq2.2','Acq2.3','Acq2.4','Test','Rev1.1','Rev1.2','Rev1.3','Rev1.4','Rev1.5','Rev2.1','Rev2.2','Rev2.3','Rev2.4','Rev2.5','Acq80','Rev80','AUCAcq','AUCRev'};
     case 3
-        Stats.Properties.VariableNames = {'Gene','Gender',Condition{1},Condition{2},Condition{3},'Acq1.1','Acq1.2','Acq1.3','Acq1.4','Acq2.1','Acq2.2','Acq2.3','Acq2.4','Test','Rev1.1','Rev1.2','Rev1.3','Rev1.4','Rev1.5','Rev2.1','Rev2.2','Rev2.3','Rev2.4','Rev2.5','Acq80','Rev80','AUCAcq','AUCRev'};
+        Stats.Properties.VariableNames = {'MouseNumber','Gene',Condition{1},Condition{2},Condition{3},'Acq1.1','Acq1.2','Acq1.3','Acq1.4','Acq2.1','Acq2.2','Acq2.3','Acq2.4','Test','Rev1.1','Rev1.2','Rev1.3','Rev1.4','Rev1.5','Rev2.1','Rev2.2','Rev2.3','Rev2.4','Rev2.5','Acq80','Rev80','AUCAcq','AUCRev'};
 end
 
 % fill columns with the relevant information
+Stats.MouseNumber = data.MouseNumber;
+Stats.Gene = data.Group;                                                    % Import the Group from data, this is used to group the data
 Stats.(Condition{1}) = table2cell(data(:,find(strcmpi(Condition{1},data.Properties.VariableNames))));
 if length(Condition)>=2
     Stats.(Condition{2}) = table2cell(data(1:end,find(strcmpi(Condition{2},data.Properties.VariableNames))));
@@ -164,7 +166,6 @@ end
 
 %% calculate mean values
 disp('Calculating...')
-Stats.Gene = data.Group;                                                    % Import the Group from data, this is used to group the data
 start = find(strcmpi(Stats.Properties.VariableNames,'Acq1.1'));             % find the column where the data starts,'Acq1.1'. this is used to index
 
 for y = 1:height(data.MouseNumber)                                          % Loop over every row
@@ -195,7 +196,7 @@ for y = 1:height(data.MouseNumber)                                          % Lo
 
 end
 
-Stats2= Stats(Stats.Test >= .8,:);                                          % exclude mice with a test score of lower than .8
+Stats2 = Stats(Stats.Test >= .8,:);                                          % exclude mice with a test score of lower than .8
 
 switch length(Condition)                                                    % switch based on number of conditions
     case 1                                                                  % Calculate Mean by gene and condition
@@ -290,15 +291,15 @@ fid = -1;
 while fid==-1
     fid = fopen(File,'a');
     if fid==-1
-        disp('Unable to save data. Check if file is open and press any key to continue')
-        pause
+        questdlg('Unable to save data. Check if file is open and press ok to continue','Saving File','ok');
     else
         fclose(fid);
         disp('Saveing data...')
-        writetable(Summary,File,'UseExcel',true,'Sheet','Summary','WriteVariableNames',true,'writemode','overwritesheet')
-        writetable(Stats2,File,'UseExcel',true,'Sheet','Statisticks','writemode','overwritesheet','WriteVariableNames',true)
+        writetable(Summary,File,'UseExcel',true,'Sheet','Grouped summary','WriteVariableNames',true,'writemode','overwritesheet')
+        writetable(Stats,File,'UseExcel',true,'Sheet','Statisticks every mouse','writemode','overwritesheet','WriteVariableNames',true)
+        writetable(Stats2,File,'UseExcel',true,'Sheet','Statisticks more than 80%','writemode','overwritesheet','WriteVariableNames',true)
     end
 end
 
-disp('Analysis succesfull')
+msgbox('Analysis succesfull')
 end
