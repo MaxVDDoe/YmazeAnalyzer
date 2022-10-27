@@ -143,14 +143,14 @@ for i = 1:height(data)                                                      % lo
 end
 
 %% Determine the condition of analysis
-Stats = array2table(zeros(height(data.MouseNumber),length(Condition)+25));  % Predefine Stats to be a table, width is determint by the number of conditions given
+Stats = array2table(zeros(height(data.MouseNumber),length(Condition)+27));  % Predefine Stats to be a table, width is determint by the number of conditions given
 switch length(Condition)                                                    % Swich based on the amount of conditions
     case 1                                                                  % Variable names are the same as trings in the Condition variable
-        Stats.Properties.VariableNames = {'MouseNumber','Gene',Condition{1},'Acq1.1','Acq1.2','Acq1.3','Acq1.4','Acq2.1','Acq2.2','Acq2.3','Acq2.4','Test','Rev1.1','Rev1.2','Rev1.3','Rev1.4','Rev1.5','Rev2.1','Rev2.2','Rev2.3','Rev2.4','Rev2.5','Acq80','Rev80','AUCAcq','AUCRev'};
+        Stats.Properties.VariableNames = {'MouseNumber','Gene',Condition{1},'Acq1.1','Acq1.2','Acq1.3','Acq1.4','Acq2.1','Acq2.2','Acq2.3','Acq2.4','Test','Rev1.1','Rev1.2','Rev1.3','Rev1.4','Rev1.5','Rev2.1','Rev2.2','Rev2.3','Rev2.4','Rev2.5','Acq80','Rev80','AUCAcq','AUCRev','SumChoise','SumFailedTrials'};
     case 2
-        Stats.Properties.VariableNames = {'MouseNumber','Gene',Condition{1},Condition{2},'Acq1.1','Acq1.2','Acq1.3','Acq1.4','Acq2.1','Acq2.2','Acq2.3','Acq2.4','Test','Rev1.1','Rev1.2','Rev1.3','Rev1.4','Rev1.5','Rev2.1','Rev2.2','Rev2.3','Rev2.4','Rev2.5','Acq80','Rev80','AUCAcq','AUCRev'};
+        Stats.Properties.VariableNames = {'MouseNumber','Gene',Condition{1},Condition{2},'Acq1.1','Acq1.2','Acq1.3','Acq1.4','Acq2.1','Acq2.2','Acq2.3','Acq2.4','Test','Rev1.1','Rev1.2','Rev1.3','Rev1.4','Rev1.5','Rev2.1','Rev2.2','Rev2.3','Rev2.4','Rev2.5','Acq80','Rev80','AUCAcq','AUCRev','SumChoise','SumFailedTrials'};
     case 3
-        Stats.Properties.VariableNames = {'MouseNumber','Gene',Condition{1},Condition{2},Condition{3},'Acq1.1','Acq1.2','Acq1.3','Acq1.4','Acq2.1','Acq2.2','Acq2.3','Acq2.4','Test','Rev1.1','Rev1.2','Rev1.3','Rev1.4','Rev1.5','Rev2.1','Rev2.2','Rev2.3','Rev2.4','Rev2.5','Acq80','Rev80','AUCAcq','AUCRev'};
+        Stats.Properties.VariableNames = {'MouseNumber','Gene',Condition{1},Condition{2},Condition{3},'Acq1.1','Acq1.2','Acq1.3','Acq1.4','Acq2.1','Acq2.2','Acq2.3','Acq2.4','Test','Rev1.1','Rev1.2','Rev1.3','Rev1.4','Rev1.5','Rev2.1','Rev2.2','Rev2.3','Rev2.4','Rev2.5','Acq80','Rev80','AUCAcq','AUCRev','SumChoise','SumFailedTrials'};
 end
 
 % fill columns with the relevant information
@@ -170,7 +170,9 @@ start = find(strcmpi(Stats.Properties.VariableNames,'Acq1.1'));             % fi
 
 for y = 1:height(data.MouseNumber)                                          % Loop over every row
     for x = start:start+18                                                  % Loop over evely collumn.
-        Stats(y,x) = {sum(data{y,(10*(x-start))+6:2:(10*(x-start))+15})/5}; % Calculate the mean for each sesion and place in the stats variable
+        Stats(y,x) = {sum(data{y,(10*(x-start))+6:2:(10*(x-start))+14})/5}; % Calculate the mean for each sesion and place in the stats variable
+        Stats.SumChoise(y) = Stats.SumChoise(y) + sum(data{y,(10*(x-start))+6:2:(10*(x-start))+14});
+        Stats.SumFailedTrials(y) = Stats.SumFailedTrials(y) + 5-sum(data{y,(10*(x-start))+7:2:(10*(x-start))+15});
     end
 
     if isempty(find(table2array(Stats(y,start:start+12))>=.8,1))
@@ -184,10 +186,14 @@ for y = 1:height(data.MouseNumber)                                          % Lo
         Stats.Rev80(y) = find(table2array(Stats(y,start+13:start+22))>=.8,1);
     end
     
-    if isnan(Stats{y,start+8})
-        yAcq = [table2array(Stats(y,start:start+4)) table2array(Stats(y,start+8))];
+    if isnan(Stats{y,start+4})
+        yAcq = [table2array(Stats(y,start:start+3)) table2array(Stats(y,start+8))];
+        Stats.SumChoise(y) = sum(data{y,6:2:44}) + sum(data{y,86:2:194});
+        Stats.SumFailedTrials(y) = 95 - (sum(data{y,7:2:45}) + sum(data{y,87:2:195}));
     else
         yAcq = table2array(Stats(y,start:start+8));
+        Stats.SumChoise(y) = sum(data{y,6:2:194});
+        Stats.SumFailedTrials(y) = 95 - sum(data{y,7:2:195});
     end
     yRev = table2array(Stats(y,start+9:start+18));
 
